@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(IlVostroProgetto VERSION 1.0.0 LANGUAGES CXX)
+project(APL_Game VERSION 1.0.0 LANGUAGES CXX)
 
 # ============================================
 # CONFIGURAZIONE BASE
