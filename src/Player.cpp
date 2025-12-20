@@ -3,33 +3,59 @@
 #include "Scene.h"
 #include <iostream>
 
-Player::Player(std::string texturePathFolder, std::string playerName):velocity(0.0f, 0.0f), isGrounded(false), speed(100.0f), gravity(200.0f), 
-                                    current_animation_frame(0), animation_timer(0.1f), animation_speed(0.1f), playerName(playerName)
+Player::Player(std::string Folder, std::string playerName)
+    : velocity(0.0f, 0.0f), isGrounded(false), speed(200.0f), gravity(500.0f),
+      current_animation_frame(0), animation_timer(0.1f), animation_speed(0.1f),
+      playerName(playerName), facingRight(true)
 {
-    //load character texture into ram only once at character creation
-    sf::Texture text;
-    std::string genericPath;
-    for(int i = 0; i < 22; i++)
+    // Carica texture idle
+    std::string path_to_texture = "assets/pp1/" + Folder + "/metarig.004-0_0000.png";
+    if(!idle_texture.loadFromFile(path_to_texture))
     {
-        if(i  < 10)
-        {
-            genericPath = "metarig.004-0_000" + std::to_string(i) + ".png";
-        }
-        else
-        {
-            genericPath = "metarig.004-0_00" + std::to_string(i) + ".png";
-        }
-        std::string fullPath = texturePathFolder + "/" + genericPath;
-        if(!text.loadFromFile(fullPath))
-        {
-            std::cerr << "Could not load texture from path " << fullPath << std::endl;
-        }
-        walk_textures.push_back(std::move(text));
+        std::cerr << "Could not load idle texture from path " << path_to_texture << std::endl;
     }
-    if(!walk_textures.empty())
-        sprite.setTexture(walk_textures[0]);
-
+    
+    // Carica texture walk
+    sf::Texture text;
+    for(int i = 2; i <= 5; i++)
+    {
+        path_to_texture = "assets/pp1/" + Folder + "/metarig.004-0_000" + std::to_string(i) + ".png";
+        if(!text.loadFromFile(path_to_texture))
+        {
+            std::cerr << "Could not load walk texture from path " << path_to_texture << std::endl;
+        }
+        walk_textures.push_back(text);
+    }
+    
+    // Carica texture jump
+    path_to_texture = "assets/pp1/" + Folder + "/metarig.004-0_0009.png";
+    if(!text.loadFromFile(path_to_texture))
+    {
+        std::cerr << "Could not load jump texture from path " << path_to_texture << std::endl;
+    }
+    jump_textures.push_back(text);
+    
+    path_to_texture = "assets/pp1/" + Folder + "/metarig.004-0_0010.png";
+    if(!text.loadFromFile(path_to_texture))
+    {
+        std::cerr << "Could not load jump texture from path " << path_to_texture << std::endl;
+    }
+    jump_textures.push_back(text);
+    
+    // Carica texture falling
+    path_to_texture = "assets/pp1/" + Folder + "/metarig.004-0_0011.png";
+    if(!falling_texture.loadFromFile(path_to_texture))
+    {
+        std::cerr << "Could not load falling texture from path " << path_to_texture << std::endl;
+    }
+    
+    // Setup sprite
+    sprite.setTexture(idle_texture);
+    
+    // Imposta origine al centro per flip corretto
     sprite.setPosition(100.f, 100.f);
+    
+    // Setup collider (più piccolo del personaggio
 }
 
 void Player::handle_input()

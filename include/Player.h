@@ -16,11 +16,17 @@ class Player: public GameObject
         sf::Vector2f velocity;
         std::vector<sf::Texture> walk_textures;
 
+        sf::Texture idle_texture;
+        std::vector<sf::Texture> jump_textures;
+        sf::Texture falling_texture;
+
+
         int current_animation_frame;
         float animation_timer, animation_speed;
         
         bool isGrounded;
         float speed, gravity;
+        bool facingRight;
 
         std::string playerName;
 
