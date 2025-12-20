@@ -81,11 +81,13 @@ void Player::handle_input()
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::A))
     {
         velocity.x -= speed;
+        facingRight = false;
     }
     //check if player wants to go to the right
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::D))
     {
         velocity.x += speed;
+        facingRight = true;
     }
     //check if player wants to jump
     if(isGrounded && sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
@@ -103,63 +105,78 @@ void Player::apply_gravity(float dt)
 
 void Player::moveX(float dt, const std::vector<Block*>& blocks)
 {
-    //move the sprite object with velocity
+    // 1. Muovi lo sprite
     sprite.move(velocity.x * dt, 0.0f);
-    //now we check the collision on this axis
-    //first we obtain the player bounds
-    auto playerBounds = sprite.getGlobalBounds();
-
-    //now we need to check for all the blocks in the blocks vector
-    //(cant we do the check only on nearby blocks?)
+    
+    // 2. Aggiorna il collider
+    updateCollider();
+    
+    // 3. Controlla collisioni usando il collider, non i bounds dello sprite
     for(const auto& block : blocks)
     {
-        if(playerBounds.intersects(block->getBounds()))
+        if(collider.intersects(block->getBounds()))
         {
-            //collision on X axis detected, we need to "block" the player on this axis
-            if(velocity.x > 0)
+            // Collisione sull'asse X rilevata
+            if(velocity.x > 0) // Andando a DESTRA
             {
-                //player is trying to go through the block
-                //we prevent them from doing so by setting the position to the last valid position
-                sprite.setPosition(block->getBounds().left - playerBounds.width, sprite.getPosition().y);
+                // Il player sta cercando di passare attraverso il blocco da destra
+                // Lo posizioniamo a sinistra del blocco
+                sprite.setPosition(block->getBounds().left - collider.width - colliderOffsetX, 
+                                 sprite.getPosition().y);
             }
+            else if(velocity.x < 0) // Andando a SINISTRA
+            {
+                // Il player sta cercando di passare attraverso il blocco da sinistra  
+                // Lo posizioniamo a destra del blocco
+                sprite.setPosition(block->getBounds().left + block->getBounds().width - colliderOffsetX, 
+                                 sprite.getPosition().y);
+            }
+            
+            // 4. Aggiorna di nuovo il collider dopo aver corretto la posizione
+            updateCollider();
+            velocity.x = 0; // Ferma il movimento sull'asse X
+            break; // Gestisci solo una collisione alla volta
         }
     }
-    updateCollider();
 }
 
 void Player::moveY(float dt, const std::vector<Block*>& blocks)
 {
-    //move the sprite object with velocity
+    // 1. Muovi lo sprite
     sprite.move(0.0f, velocity.y * dt);
-    //now we check the collision on this axis
-    //first we obtain the player bounds
-    auto playerBounds = sprite.getGlobalBounds();
+    
+    // 2. Aggiorna il collider
+    updateCollider();
+    
+    // 3. Reset dello stato grounded
     isGrounded = false;
-
-    //now we need to check for all the blocks in the blocks vector
-    //(cant we do the check only on nearby blocks?)
+    
+    // 4. Controlla collisioni usando il collider
     for(const auto& block : blocks)
     {
-        if(playerBounds.intersects(block->getBounds()))
+        if(collider.intersects(block->getBounds()))
         {
-            //collision on X axis detected, we need to "block" the player on this axis
-            if(velocity.y > 0)
+            // Determina la direzione della collisione
+            if(velocity.y > 0) // CADENDO (verso il basso)
             {
-                //player is trying to go through the block from the low side (head impacting on the block)
-                //we prevent them from doing so by setting the position to the last valid position
-                sprite.setPosition(sprite.getPosition().x, block->getBounds().top - playerBounds.height);
+                // Collisione dal basso: il player atterra sul blocco
+                sprite.setPosition(sprite.getPosition().x, 
+                                 block->getBounds().top - collider.height - colliderOffsetY);
                 isGrounded = true;
             }
-            else
+            else if(velocity.y < 0) // SALTANDO (verso l'alto)
             {
-                //player is simply walking on the block
-                sprite.setPosition(sprite.getPosition().x, block->getBounds().top + block->getBounds().height);
+                // Collisione dall'alto: il player colpisce la testa
+                sprite.setPosition(sprite.getPosition().x, 
+                                 block->getBounds().top + block->getBounds().height - colliderOffsetY);
             }
-            velocity.y = 0;
-            playerBounds = sprite.getGlobalBounds();
+            
+            // 5. Aggiorna di nuovo il collider dopo aver corretto la posizione
+            updateCollider();
+            velocity.y = 0; // Ferma il movimento sull'asse Y
+            break; // Gestisci solo una collisione alla volta
         }
     }
-    updateCollider();
 }
 
 void Player::updateAnimation(float dt)
@@ -173,6 +190,16 @@ void Player::updateAnimation(float dt)
         animation_timer = 0.f;
         current_animation_frame = (current_animation_frame + 1) % walk_textures.size();
         sprite.setTexture(walk_textures[current_animation_frame]);
+    }
+
+    if(!facingRight)
+    {
+        //flip the sprite
+        sprite.setScale(-1, 1);
+    }
+    else
+    {
+        sprite.setScale(1, 1);
     }
 }
 
