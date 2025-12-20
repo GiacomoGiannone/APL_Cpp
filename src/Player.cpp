@@ -94,6 +94,7 @@ void Player::handle_input()
     //check if player wants to go to the left
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::A))
     {
+        std::cout << "Tasto A premuto!" << std::endl; // Debug
         velocity.x -= speed;
         facingRight = false;
     }

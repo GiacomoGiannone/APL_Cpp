@@ -2,6 +2,8 @@
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Window/Keyboard.hpp>
+#include <vector>
+#include <string>
 #include "GameObject.h"
 
 class Block;
