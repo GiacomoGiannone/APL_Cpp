@@ -108,7 +108,7 @@ void Player::handle_input()
     {
         //we will adjust gravity later in the applyGravity function
         //if not the player would keep flying
-        velocity.y = -200.0f;
+        velocity.y = -250.0f;
     }
 }
 
