@@ -6,11 +6,26 @@ set(CMAKE_CXX_STANDARD 17)
 # ============================================
 # SETUP SORGENTI
 # ============================================
-file(GLOB_RECURSE SOURCES "src/*.cpp")
-file(GLOB_RECURSE HEADERS "include/*.h" "include/*.hpp")
+# file(GLOB_RECURSE SOURCES "src/*.cpp")
+# file(GLOB_RECURSE SOURCES "net/*.cpp")
+# file(GLOB_RECURSE HEADERS "include/*.h" "include/*.hpp")
+file(GLOB_RECURSE SOURCES 
+    "src/*.cpp"
+    "net/*.cpp"           # <-- AGGIUNGI QUESTO
+    "src/**/*.cpp"        # Ricorsivo in src
+    "net/**/*.cpp"        # Ricorsivo in net
+)
+
+file(GLOB_RECURSE HEADERS 
+    "include/*.h" 
+    "include/*.hpp"
+    "net/*.h"             # <-- AGGIUNGI QUESTO
+    "net/*.hpp"
+)
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/net")
 
 # ============================================
 # CONFIGURAZIONE WINDOWS
@@ -23,7 +38,7 @@ if(WIN32)
     
     target_include_directories(${PROJECT_NAME} PRIVATE "${SFML_ROOT}/include")
     target_link_directories(${PROJECT_NAME} PRIVATE "${SFML_ROOT}/lib")
-    target_link_libraries(${PROJECT_NAME} sfml-graphics sfml-window sfml-system sfml-audio opengl32 winmm gdi32)
+    target_link_libraries(${PROJECT_NAME} sfml-graphics sfml-window sfml-system sfml-audio sfml-network opengl32 winmm gdi32)
 
     # Copia DLL Windows
     file(GLOB SFML_DLLS "${SFML_ROOT}/bin/*.dll")
@@ -54,6 +69,7 @@ elseif(APPLE)
         "${SFML_ROOT}/lib/libsfml-window.dylib"
         "${SFML_ROOT}/lib/libsfml-system.dylib"
         "${SFML_ROOT}/lib/libsfml-audio.dylib"
+        "${SFML_ROOT}/lib/libsfml-network.dylib" 
     )
     
     # Rpath setup

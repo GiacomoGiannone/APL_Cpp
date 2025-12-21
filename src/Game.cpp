@@ -2,6 +2,8 @@
 
 #include "Game.h"
 #include "Scene.h"
+#include "Player.h"
+#include "NetMessages.h"
 
 // Inizializzazione membro statico
 Game* Game::instance = nullptr;
@@ -25,7 +27,8 @@ Game::Game(sf::RenderWindow* window) : window(window)
 
 void Game::update(float dt)
 {
-    if (currentScene != nullptr) {
+    if (currentScene != nullptr) 
+    {
         currentScene->setDt(dt);
         currentScene->update();
     }

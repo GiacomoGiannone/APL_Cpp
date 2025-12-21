@@ -24,4 +24,5 @@ public:
     void addEntity(std::unique_ptr<GameObject> entity);
     void update();
     void draw(sf::RenderWindow& window) const;
+    Player* getLocalPlayerInScene();
 };

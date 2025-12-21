@@ -63,3 +63,16 @@ void Scene::setDt(float dt)
 {
     this->dt = dt;
 }
+
+Player* Scene::getLocalPlayerInScene()
+{
+    std::vector<Player*> playersInScene = getPlayers();
+    for(auto& player : playersInScene)
+    {
+        if(player->isLocal())
+        {
+            return player;
+        }
+    }
+    return nullptr;
+}

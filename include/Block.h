@@ -7,7 +7,7 @@
 class Block: public GameObject
 {
     private:
-        //shape already holds x,y,width and height
+        //sprite already holds x,y,width and height
         //no point in duplicating them here
         sf::Sprite sprite;
         sf::Texture texture;

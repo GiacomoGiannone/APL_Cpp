@@ -33,6 +33,7 @@ class Player: public GameObject
         bool isGrounded;
         float speed, gravity;
         bool facingRight;
+        bool localPlayer;
 
         std::string playerName;
 
@@ -43,7 +44,7 @@ class Player: public GameObject
         void updateAnimation(float dt);
         void updateCollider();
     public:
-        Player(std::string texturePathFolder, std::string playerName);
+        Player(std::string texturePathFolder, std::string playerName, bool localPlayer);
         void update(const Scene& scene) override;
         void draw(sf::RenderWindow &window) override;
 
@@ -54,6 +55,8 @@ class Player: public GameObject
             jumping,
             falling
         };
+
+        bool isLocal();
 
     private:
         PlayerState state = PlayerState::idle;

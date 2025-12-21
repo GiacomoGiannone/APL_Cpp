@@ -1,12 +1,14 @@
 #include "Player.h"
 #include "Block.h"
 #include "Scene.h"
+#include "NetMessages.h"
+#include "NetworkClient.h"
 #include <iostream>
 
-Player::Player(std::string Folder, std::string playerName)
+Player::Player(std::string Folder, std::string playerName, bool localPlayer)
     : velocity(0.0f, 0.0f), isGrounded(false), speed(200.0f), gravity(200.0f),
       current_animation_frame(0), animation_timer(0.1f), animation_speed(0.1f),
-      playerName(playerName), facingRight(true)
+      playerName(playerName), facingRight(true), localPlayer(localPlayer)
 {
     // Carica texture idle
     std::string path_to_texture = "assets/pp1/" + Folder + "/metarig.004-0_0000.png";
@@ -94,7 +96,6 @@ void Player::handle_input()
     //check if player wants to go to the left
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::A))
     {
-        std::cout << "Tasto A premuto!" << std::endl; // Debug
         velocity.x -= speed;
         facingRight = false;
     }
@@ -250,6 +251,11 @@ void Player::updateCollider()
     collider.top = sprite.getPosition().y - (collider.height / 2.f);
 }
 
+bool Player::isLocal()
+{
+    return localPlayer;
+}
+
 void Player::draw(sf::RenderWindow &window) 
 {
     window.draw(sprite);
@@ -289,11 +295,29 @@ void Player::update(const Scene& scene)
 {
     float dt = scene.getDt();
     auto blocks = scene.getBlocks();
+    //TODO handle only localPlayer input
     handle_input();
     apply_gravity(scene.getDt());
     moveX(dt, blocks);
     moveY(dt, blocks);
     updateAnimation(dt);
+
+    if (localPlayer && NetworkClient::getInstance()->isConnected()) 
+    {
+        PacketMove packet;
+        packet.header.type = PacketType::MOVE;
+        // L'ID dovrebbe essere assegnato dal server al login, per ora metti 0 o 1
+        packet.playerId = 1; 
+        packet.x = sprite.getPosition().x;
+        packet.y = sprite.getPosition().y;
+        packet.velocityX = velocity.x;
+        packet.velocityY = velocity.y;
+        packet.isFacingRight = facingRight;
+        packet.isGrounded = isGrounded;
+
+        // Spedisci!
+        NetworkClient::getInstance()->sendPacket(packet);
+    }
 
     //each 500 frames print all the info about the player
     static int frameCounter = 0;
