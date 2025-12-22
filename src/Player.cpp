@@ -354,6 +354,8 @@ void Player::syncFromNetwork(float x, float y, float velX, float velY, bool face
 
     sprite.setPosition(x, y); // Teletrasporto (più avanti si potrà fare interpolazione)
     velocity.x = velX;        // Serve per far funzionare updateAnimation()
+    //non chiamiamo mai update animation sui giocatori online?
+    //oppure chiamiamo moveX e moveY su di loro? e quindi la riga sopra, sprite.setPosition, non serve?
     velocity.y = velY;
     facingRight = faceRight;
     isGrounded = grounded;
