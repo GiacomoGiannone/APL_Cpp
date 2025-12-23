@@ -62,12 +62,20 @@ int main()
     scene.addEntity(std::move(localPlayer)); // Non serve più al main, lo passiamo alla scena
 
     // Aggiunta Blocchi (Mappa)
-    for(int i=0; i < 40; i++)
-    {
-        scene.addEntity(std::make_unique<Block>(15.0f*i, 500.0f, "assets/pp1/Blocks/block1.png"));
-        if(i % 3 == 0)
-            scene.addEntity(std::make_unique<Block>(15.0f*i, 400.0f, "assets/pp1/Blocks/block1.png"));
-    }
+    // Funzione helper (lambda) per creare una fila di blocchi velocemente
+    auto createPlatform = [&](float startX, float startY, int numBlocks) {
+        for(int i = 0; i < numBlocks; i++) {
+            scene.addEntity(std::make_unique<Block>(
+                startX + (i * 15.0f),  // X: Si sposta di 15px per ogni blocco
+                startY,                // Y: Rimane fissa per la piattaforma
+                "assets/pp1/Blocks/block1.png"
+            ));
+        }
+    };
+    createPlatform(100.0f, 500.0f, 40);
+    createPlatform(130.0f, 350.0f, 10);
+    createPlatform(520.0f, 350.0f, 10);
+    createPlatform(340.0f, 200.0f, 8);
 
     // Impostiamo la scena attiva nel gioco
     game->setScene(&scene);

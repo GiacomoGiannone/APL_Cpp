@@ -2,7 +2,7 @@
 set -e
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
-DEPS_DIR="$PROJECT_DIR/deps"
+DEPS_DIR="$PROJECT_DIR/Cpp/deps"
 SFML_VERSION="2.6.1"
 
 echo "=== Configurazione Mac (Fix Frameworks + Architecture) ==="
