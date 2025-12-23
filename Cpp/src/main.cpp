@@ -59,7 +59,7 @@ int main()
     // Creazione del Player Locale
     auto localPlayer = std::make_unique<Player>("PM1", playerName, true);
     localPlayer->setId(myPlayerId); // Assegniamo l'ID al nostro player così sa chi è quando invia i pacchetti
-    scene.addEntity(std::move(localPlayer));
+    scene.addEntity(std::move(localPlayer)); // Non serve più al main, lo passiamo alla scena
 
     // Aggiunta Blocchi (Mappa)
     for(int i=0; i < 40; i++)

@@ -57,7 +57,7 @@ func main() {
 
 func handleClient(conn net.Conn) {
 	// Assegna un ID al nuovo client
-	clientsMu.Lock()
+	clientsMu.Lock() //Proteggiamo la mappa clients prima di scriverci dentro
 	id := nextID
 	nextID++
 	client := &Client{conn: conn, id: id}
@@ -105,7 +105,7 @@ func handleClient(conn net.Conn) {
 		}
 
 		// D. Logica server: Qui potremmo modificare il pacchetto
-		// Esempio: Il server forza l'ID del pacchetto per sicurezza
+		// Il server forza l'ID del pacchetto per sicurezza (prevenendo impersonificazioni)
 		// (Il campo playerId è il primo campo (uint32) dopo l'header nel tuo MovePacket)
 		if header.Type == 2 { // MOVE
 			// Sovrascriviamo i primi 4 byte del body con il vero ID del client
