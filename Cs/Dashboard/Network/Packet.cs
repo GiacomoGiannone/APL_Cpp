@@ -1,38 +1,35 @@
-using System;
 using System.IO;
 
-namespace Dashboard.Network
+namespace Dashboard.Network;
+
+// Enum deve corrispondere a quello C++ (NetMessages.h)
+public enum PacketType : uint
 {
-    public enum PacketType : uint
+    None = 0,
+    AssignID = 1,
+    Move = 2,
+    PlayerJoined = 3,
+    // Aggiungi qui altri messaggi se necessario
+}
+
+public class GamePacket
+{
+    public PacketType Type { get; set; }
+    public byte[] Data { get; set; } = Array.Empty<byte>();
+
+    // Helper per creare pacchetti da inviare (se la dashboard dovrà dare comandi)
+    public static byte[] Serialize(PacketType type, byte[] body)
     {
-        Join = 1,
-        Move = 2
-    }
+        uint bodySize = (uint)(body?.Length ?? 0);
+        uint totalSize = 4 + 4 + bodySize; // 4 Type + 4 Size + Body
 
-    public struct PacketHeader
-    {
-        public uint Type;
-        public uint PacketSize;
-    }
-
-    public static class PacketWriter
-    {
-        public static byte[] CreateMovePacket(float x, float y)
-        {
-            using var ms = new MemoryStream();
-            using var bw = new BinaryWriter(ms);
-
-            uint type = (uint)PacketType.Move;
-            uint size = 8 + 4 + 4 + 4; // header + playerId + x + y
-
-            bw.Write(type);
-            bw.Write(size);
-
-            bw.Write(0u); // playerId (server lo imposta)
-            bw.Write(x);
-            bw.Write(y);
-
-            return ms.ToArray();
-        }
+        using var ms = new MemoryStream();
+        using var writer = new BinaryWriter(ms);
+        
+        writer.Write((uint)type);
+        writer.Write(totalSize);
+        if (body != null) writer.Write(body);
+        
+        return ms.ToArray();
     }
 }
