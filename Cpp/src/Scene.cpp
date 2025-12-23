@@ -64,8 +64,7 @@ void Scene::update()
     PacketHeader header;
     size_t received;
 
-    // MODIFICA IMPORTANTE: Usiamo un WHILE, non un IF.
-    // Dobbiamo processare TUTTI i pacchetti arrivati, non solo uno alla volta.
+    // Processiamo TUTTI i pacchetti arrivati (non solo uno alla volta).
     while (NetworkClient::getInstance()->receive(&header, sizeof(header), received) == sf::Socket::Done)
     {
         // Controllo validità header
