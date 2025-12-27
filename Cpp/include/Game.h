@@ -2,7 +2,7 @@
 
 #include <SFML/Graphics.hpp>
 
-#include "GameObject.h"
+//#include "GameObject.h"
 
 class Scene;
 
