@@ -79,7 +79,17 @@ int main()
     createPlatform(340.0f, 200.0f, 8);
 
     // Aggiunta di un Enemy per test
-    scene.addEntity(std::make_unique<Enemy>("PM2"));
+    // Solo il primo client (con ID più basso) controlla l'AI dei nemici
+    // In una versione più avanzata, il server deciderebbe chi è l'host
+    uint32_t enemyId = 1; // ID fisso per il nemico di test
+    bool isEnemyHost = (myPlayerId % 2 == 1); // Logica semplice: ID dispari = host
+    auto enemy = std::make_unique<Enemy>("PM2", enemyId, isEnemyHost);
+    scene.addEntity(std::move(enemy));
+    
+    if (isEnemyHost)
+        std::cout << "👾 Sei l'HOST per i nemici (controlli la loro AI)" << std::endl;
+    else
+        std::cout << "👾 Sei un CLIENT per i nemici (ricevi aggiornamenti)" << std::endl;
 
     // Impostiamo la scena attiva nel gioco
     game->setScene(&scene);

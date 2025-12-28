@@ -2,15 +2,17 @@
 #include "Block.h"
 #include "Scene.h"
 #include "Player.h"
+#include "NetworkClient.h"
+#include "NetMessages.h"
 #include <iostream>
 #include <cmath>
 
-Enemy::Enemy(std::string Folder)
+Enemy::Enemy(std::string Folder, uint32_t id, bool localControl)
     : Hittable(50.f), velocity(0.0f, 0.0f), isGrounded(false), speed(80.0f), gravity(200.0f),
       current_animation_frame(0), animation_timer(0.1f), animation_speed(0.1f),
       facingRight(true), isAttacking(false), attackFrame(0), attackTimer(0.f),
       attackCooldownTimer(0.f), patrolTimer(0.f), patrolDirection(1.f),
-      seesPlayer(false), attackDelayTimer(0.f)
+      seesPlayer(false), attackDelayTimer(0.f), enemyId(id), isLocallyControlled(localControl)
 {
     sf::Texture texture;
     std::string path_to_folder = "assets/pp1/" + Folder + "/";  
@@ -324,10 +326,16 @@ void Enemy::update(const Scene& scene)
     // Gestione morte
     if (dying)
     {
-        // Ruota lo sprite di 90 gradi (progressivamente o subito)
         sprite.setRotation(90.f);
         updateDeath(dt);
-        return; // Non fare altro se sta morendo
+        return;
+    }
+    
+    // Se non sono il controller locale, solo aggiorna animazione
+    if (!isLocallyControlled)
+    {
+        updateAnimation(dt);
+        return;
     }
     
     auto blocks = scene.getBlocks();
@@ -337,6 +345,25 @@ void Enemy::update(const Scene& scene)
     moveX(dt, blocks);
     moveY(dt, blocks);
     updateAnimation(dt);
+    
+    // Invia aggiornamento al server
+    if (NetworkClient::getInstance()->isConnected())
+    {
+        PacketEnemyUpdate packet;
+        packet.header.type = PacketType::ENEMY_UPDATE;
+        packet.header.packetSize = sizeof(PacketEnemyUpdate);
+        packet.enemyId = enemyId;
+        packet.x = sprite.getPosition().x;
+        packet.y = sprite.getPosition().y;
+        packet.velocityX = velocity.x;
+        packet.velocityY = velocity.y;
+        packet.isFacingRight = facingRight;
+        packet.isGrounded = isGrounded;
+        packet.isAttacking = isAttacking;
+        packet.currentHealth = currentHealth;
+        
+        NetworkClient::getInstance()->sendPacket(packet);
+    }
 }
 
 void Enemy::draw(sf::RenderWindow& window)
@@ -394,5 +421,34 @@ void Enemy::draw(sf::RenderWindow& window)
         hitboxRect.setOutlineColor(sf::Color::Red);
         hitboxRect.setOutlineThickness(2.f);
         window.draw(hitboxRect);
+    }
+}
+
+void Enemy::syncFromNetwork(float x, float y, float velX, float velY, 
+                            bool faceRight, bool grounded, bool attacking, float health)
+{
+    if (isLocallyControlled)
+        return; // Non sincronizzare se siamo noi a controllarlo
+    
+    sprite.setPosition(x, y);
+    updateCollider();
+    velocity.x = velX;
+    velocity.y = velY;
+    facingRight = faceRight;
+    isGrounded = grounded;
+    
+    // Gestione animazione attacco
+    if (attacking && !isAttacking)
+    {
+        setAttackAnimation();
+    }
+    
+    // Sincronizza la salute
+    currentHealth = health;
+    if (currentHealth <= 0.f && !dying)
+    {
+        currentHealth = 0.f;
+        dying = true;
+        onDeath();
     }
 }

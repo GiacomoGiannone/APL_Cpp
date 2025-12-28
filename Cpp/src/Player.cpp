@@ -439,7 +439,22 @@ void Player::attack(const Scene& scene)
         if(attackHitbox.intersects(enemy->getBounds()))
         {
             std::cout << "Player " << playerName << " attacked an Enemy!" << std::endl;
+            
+            // Applica danno localmente
             enemy->takeDamage(25.f);
+            
+            // Invia pacchetto danno al server per sincronizzare con altri client
+            if (NetworkClient::getInstance()->isConnected())
+            {
+                PacketEnemyDamage damagePacket;
+                damagePacket.header.type = PacketType::ENEMY_DAMAGE;
+                damagePacket.header.packetSize = sizeof(PacketEnemyDamage);
+                damagePacket.enemyId = enemy->getId();
+                damagePacket.attackerId = this->id;
+                damagePacket.damage = 25.f;
+                
+                NetworkClient::getInstance()->sendPacket(damagePacket);
+            }
         }
     }
     setAttackAnimation();

@@ -139,6 +139,70 @@ void Scene::update()
                 }
             }
         }
+        else if (header.type == PacketType::ENEMY_UPDATE)
+        {
+            PacketEnemyUpdate enemyPacket;
+            enemyPacket.header = header;
+            
+            size_t remainingSize = sizeof(PacketEnemyUpdate) - sizeof(PacketHeader);
+            char* buffer = (char*)&enemyPacket + sizeof(PacketHeader);
+            
+            if (NetworkClient::getInstance()->receive(buffer, remainingSize, received) != sf::Socket::Done)
+                break;
+            
+            // Trova il nemico e aggiornalo
+            bool found = false;
+            for (auto* enemy : getEnemies())
+            {
+                if (enemy->getId() == enemyPacket.enemyId)
+                {
+                    enemy->syncFromNetwork(
+                        enemyPacket.x, enemyPacket.y,
+                        enemyPacket.velocityX, enemyPacket.velocityY,
+                        enemyPacket.isFacingRight, enemyPacket.isGrounded,
+                        enemyPacket.isAttacking, enemyPacket.currentHealth
+                    );
+                    found = true;
+                    break;
+                }
+            }
+            
+            // Se non esiste, crealo (nemico remoto)
+            if (!found)
+            {
+                auto remoteEnemy = std::make_unique<Enemy>("PM2", enemyPacket.enemyId, false);
+                remoteEnemy->syncFromNetwork(
+                    enemyPacket.x, enemyPacket.y,
+                    enemyPacket.velocityX, enemyPacket.velocityY,
+                    enemyPacket.isFacingRight, enemyPacket.isGrounded,
+                    enemyPacket.isAttacking, enemyPacket.currentHealth
+                );
+                addEntity(std::move(remoteEnemy));
+                std::cout << "👾 Nemico remoto creato: ID " << enemyPacket.enemyId << std::endl;
+            }
+        }
+        else if (header.type == PacketType::ENEMY_DAMAGE)
+        {
+            PacketEnemyDamage damagePacket;
+            damagePacket.header = header;
+            
+            size_t remainingSize = sizeof(PacketEnemyDamage) - sizeof(PacketHeader);
+            char* buffer = (char*)&damagePacket + sizeof(PacketHeader);
+            
+            if (NetworkClient::getInstance()->receive(buffer, remainingSize, received) != sf::Socket::Done)
+                break;
+            
+            // Applica il danno al nemico
+            for (auto* enemy : getEnemies())
+            {
+                if (enemy->getId() == damagePacket.enemyId)
+                {
+                    enemy->takeDamage(damagePacket.damage);
+                    std::cout << "👾 Nemico " << damagePacket.enemyId << " ha subito " << damagePacket.damage << " danni!" << std::endl;
+                    break;
+                }
+            }
+        }
     }
 
     // --------------------------------------------------------

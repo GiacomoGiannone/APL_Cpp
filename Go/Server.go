@@ -13,6 +13,17 @@ const (
 	PORT = ":8080"
 )
 
+// Tipi di pacchetti (deve corrispondere a C++)
+const (
+	PACKET_LOGIN               = 1
+	PACKET_MOVE                = 2
+	PACKET_PLAYER_DISCONNECTED = 3
+	PACKET_ENEMY_SPAWN         = 4
+	PACKET_ENEMY_UPDATE        = 5
+	PACKET_ENEMY_DAMAGE        = 6
+	PACKET_ENEMY_DEATH         = 7
+)
+
 // Struttura Client: rappresenta un giocatore connesso
 type Client struct {
 	conn net.Conn
@@ -107,9 +118,20 @@ func handleClient(conn net.Conn) {
 		// D. Logica server: Qui potremmo modificare il pacchetto
 		// Il server forza l'ID del pacchetto per sicurezza (prevenendo impersonificazioni)
 		// (Il campo playerId è il primo campo (uint32) dopo l'header nel tuo MovePacket)
-		if header.Type == 2 { // MOVE
+		if header.Type == PACKET_MOVE {
 			// Sovrascriviamo i primi 4 byte del body con il vero ID del client
 			binary.LittleEndian.PutUint32(body[0:4], id)
+		}
+
+		// Gestione pacchetti nemici
+		if header.Type == PACKET_ENEMY_UPDATE {
+			// Inoltra aggiornamento nemico a tutti gli altri client
+			fmt.Printf("👾 Enemy Update ricevuto da ID %d\n", id)
+		}
+
+		if header.Type == PACKET_ENEMY_DAMAGE {
+			// Inoltra danno nemico a tutti gli altri client
+			fmt.Printf("⚔️ Enemy Damage ricevuto da ID %d\n", id)
 		}
 
 		// E. INOLTRO (Broadcasting)
