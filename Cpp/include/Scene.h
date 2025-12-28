@@ -7,6 +7,7 @@
 
 class Block;
 class Player;
+class Enemy;
 
 class Scene
 {
@@ -20,6 +21,7 @@ public:
 
     std::vector<Block*> getBlocks() const;
     std::vector<Player*> getPlayers() const;
+    std::vector<Enemy*> getEnemies() const;
     void setDt(float dt);
     float getDt() const;
     void addEntity(std::unique_ptr<GameObject> entity);

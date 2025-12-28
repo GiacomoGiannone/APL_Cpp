@@ -4,12 +4,12 @@
 #include <SFML/Window/Keyboard.hpp>
 #include <vector>
 #include <string>
-#include "GameObject.h"
+#include "Hittable.h"
 
 class Block;
 class Scene;
 
-class Player: public GameObject
+class Player: public Hittable
 {
     private:
         //no point in saving x and y
@@ -64,6 +64,7 @@ class Player: public GameObject
         void syncFromNetwork(float x, float y, float velX, float velY, bool faceRight, bool grounded);
         int getId() const;
         void setId(int newId);
+        sf::FloatRect getBounds() const { return collider; }
 
         enum class PlayerState
         {

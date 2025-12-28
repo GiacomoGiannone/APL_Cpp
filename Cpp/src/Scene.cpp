@@ -1,9 +1,12 @@
 #include "Scene.h"
 #include <typeinfo>
-#include <iostream> // Serve per std::cout
+#include <iostream>
+#include <algorithm>
 
 #include "Block.h"
 #include "Player.h"
+#include "Enemy.h"
+#include "Hittable.h"
 
 #include "NetworkClient.h"
 #include "NetMessages.h"
@@ -34,6 +37,19 @@ std::vector<Player*> Scene::getPlayers() const
         }
     }
     return players;
+}
+
+std::vector<Enemy*> Scene::getEnemies() const
+{
+    std::vector<Enemy*> enemies;
+    for (const auto& entity : entities)
+    {
+        if (Enemy* e = dynamic_cast<Enemy*>(entity.get()))
+        {
+            enemies.push_back(e);
+        }
+    }
+    return enemies;
 }
 
 float Scene::getDt() const
@@ -132,6 +148,19 @@ void Scene::update()
     {
         entity->update(*this);
     }
+    
+    // Rimuovi entità morte (dopo il loop per evitare crash)
+    entities.erase(
+        std::remove_if(entities.begin(), entities.end(),
+            [](const std::unique_ptr<GameObject>& entity) {
+                if (Hittable* hittable = dynamic_cast<Hittable*>(entity.get()))
+                {
+                    return hittable->isDead();
+                }
+                return false;
+            }),
+        entities.end()
+    );
 }
 
 void Scene::draw(sf::RenderWindow& window) const

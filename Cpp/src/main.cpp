@@ -9,6 +9,7 @@
 #include "Scene.h"
 #include "Game.h"
 #include "NetworkClient.h"
+#include "Enemy.h"
 
 int main()
 {
@@ -76,6 +77,9 @@ int main()
     createPlatform(130.0f, 325.0f, 10);
     createPlatform(520.0f, 325.0f, 10);
     createPlatform(340.0f, 200.0f, 8);
+
+    // Aggiunta di un Enemy per test
+    scene.addEntity(std::make_unique<Enemy>("PM2"));
 
     // Impostiamo la scena attiva nel gioco
     game->setScene(&scene);

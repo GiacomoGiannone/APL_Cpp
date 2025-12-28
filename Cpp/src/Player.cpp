@@ -4,16 +4,17 @@
 #include "Game.h"
 #include "NetMessages.h"
 #include "NetworkClient.h"
+#include "Enemy.h"
 #include <iostream>
 
 Player::Player(std::string Folder, std::string playerName, bool localPlayer)
-    : velocity(0.0f, 0.0f), isGrounded(false), speed(200.0f), gravity(200.0f),
+    : Hittable(100.f), velocity(0.0f, 0.0f), isGrounded(false), speed(200.0f), gravity(200.0f),
       current_animation_frame(0), animation_timer(0.1f), animation_speed(0.1f),
       playerName(playerName), facingRight(true), localPlayer(localPlayer), folder(Folder),
       isAttacking(false), attackFrame(0), attackTimer(0.f), attackCooldownTimer(0.f)
 {
     // Carica texture idle
-    std::string path_to_texture = "assets/pp1/" + Folder + "/metarig.004-0_0000.png";
+    std::string path_to_texture = "assets/pp1/" + Folder + "/Idle.png";
     if(!idle_texture.loadFromFile(path_to_texture))
     {
         std::cerr << "Could not load idle texture from path " << path_to_texture << std::endl;
@@ -21,9 +22,9 @@ Player::Player(std::string Folder, std::string playerName, bool localPlayer)
     
     // Carica texture walk
     sf::Texture text;
-    for(int i = 2; i <= 5; i++)
+    for(int i = 1; i <= 4; i++)
     {
-        path_to_texture = "assets/pp1/" + Folder + "/metarig.004-0_000" + std::to_string(i) + ".png";
+        path_to_texture = "assets/pp1/" + Folder + "/Walk_" + std::to_string(i) + ".png";
         if(!text.loadFromFile(path_to_texture))
         {
             std::cerr << "Could not load walk texture from path " << path_to_texture << std::endl;
@@ -32,14 +33,14 @@ Player::Player(std::string Folder, std::string playerName, bool localPlayer)
     }
     
     // Carica texture djump
-    path_to_texture = "assets/pp1/" + Folder + "/metarig.004-0_0009.png";
+    path_to_texture = "assets/pp1/" + Folder + "/Jump_1.png";
     if(!text.loadFromFile(path_to_texture))
     {
         std::cerr << "Could not load jump texture from path " << path_to_texture << std::endl;
     }
     jump_textures.push_back(text);
     
-    path_to_texture = "assets/pp1/" + Folder + "/metarig.004-0_0010.png";
+    path_to_texture = "assets/pp1/" + Folder + "/Jump_2.png";
     if(!text.loadFromFile(path_to_texture))
     {
         std::cerr << "Could not load jump texture from path " << path_to_texture << std::endl;
@@ -47,7 +48,7 @@ Player::Player(std::string Folder, std::string playerName, bool localPlayer)
     jump_textures.push_back(text);
     
     // Carica texture falling
-    path_to_texture = "assets/pp1/" + Folder + "/metarig.004-0_0011.png";
+    path_to_texture = "assets/pp1/" + Folder + "/Fall.png";
     if(!falling_texture.loadFromFile(path_to_texture))
     {
         std::cerr << "Could not load falling texture from path " << path_to_texture << std::endl;
@@ -317,7 +318,49 @@ bool Player::isLocal()
 
 void Player::draw(sf::RenderWindow &window) 
 {
+    // Fade out durante la morte
+    if (dying)
+    {
+        float alpha = 255.f * (1.f - getDeathProgress());
+        sprite.setColor(sf::Color(255, 255, 255, static_cast<sf::Uint8>(alpha)));
+    }
+    
     window.draw(sprite);
+    
+    // Non disegnare health bar se sta morendo
+    if (dying) return;
+    
+    // Health bar
+    float barWidth = 30.f;
+    float barHeight = 4.f;
+    float barOffsetY = -20.f; // Sopra la testa
+    
+    // Background (rosso)
+    sf::RectangleShape healthBarBg;
+    healthBarBg.setSize(sf::Vector2f(barWidth, barHeight));
+    healthBarBg.setPosition(sprite.getPosition().x - barWidth / 2.f, 
+                            sprite.getPosition().y + barOffsetY);
+    healthBarBg.setFillColor(sf::Color(60, 60, 60));
+    healthBarBg.setOutlineColor(sf::Color::Black);
+    healthBarBg.setOutlineThickness(1.f);
+    window.draw(healthBarBg);
+    
+    // Foreground (verde -> giallo -> rosso in base alla salute)
+    sf::RectangleShape healthBar;
+    float healthPercent = getHealthPercent();
+    healthBar.setSize(sf::Vector2f(barWidth * healthPercent, barHeight));
+    healthBar.setPosition(sprite.getPosition().x - barWidth / 2.f, 
+                          sprite.getPosition().y + barOffsetY);
+    
+    // Colore in base alla percentuale
+    if (healthPercent > 0.6f)
+        healthBar.setFillColor(sf::Color(50, 205, 50)); // Verde
+    else if (healthPercent > 0.3f)
+        healthBar.setFillColor(sf::Color(255, 165, 0)); // Arancione
+    else
+        healthBar.setFillColor(sf::Color(220, 20, 60)); // Rosso
+    
+    window.draw(healthBar);
     
     // Draw attack hitbox when attacking
     if (isAttacking)
@@ -390,6 +433,15 @@ void Player::attack(const Scene& scene)
             }
         }
     }
+
+    for(const auto& enemy : scene.getEnemies())
+    {
+        if(attackHitbox.intersects(enemy->getBounds()))
+        {
+            std::cout << "Player " << playerName << " attacked an Enemy!" << std::endl;
+            enemy->takeDamage(25.f);
+        }
+    }
     setAttackAnimation();
 }
 
@@ -407,6 +459,15 @@ void Player::setAttackAnimation()
 void Player::update(const Scene& scene) 
 {
     float dt = scene.getDt();
+    
+    // Gestione morte
+    if (dying)
+    {
+        sprite.setRotation(90.f);
+        updateDeath(dt);
+        return;
+    }
+    
     auto blocks = scene.getBlocks();
     
     // Update attack cooldown
